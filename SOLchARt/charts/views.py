@@ -4,7 +4,7 @@ from .models import Member, Data
 import pandas as pd
 from django.shortcuts import render, redirect
 from .forms import ExcelUploadForm
-
+from django.http import JsonResponse
 
 def charts(request):
   mymembers = Member.objects.all().values()
@@ -49,3 +49,26 @@ def upload_excel(request):
 def success(request):
   template = loader.get_template('success.html')
   return HttpResponse(template.render())
+
+def chart_page(request):
+  return render(request, 'chart_page.html')
+
+
+def get_chart_data(request): #udostępnia dane do wykresów
+  data = Data.objects.all().order_by('Time')
+
+  time_labels = [record.Time.strftime('%Y-%m-%d %H:%M:%S') for record in data]
+  temperatures = [record.Temp for record in data]
+  H_Total = [record.H_Total for record in data]
+  E_Total = [record.E_Total for record in data]
+  E_Today = [record.E_Today for record in data]
+
+  chart_data = {
+    'time_labels': time_labels,
+    'temperatures': temperatures,
+    'H_Total': H_Total,
+    'E_Total': E_Total,
+    'E_Today': E_Today,
+  }
+
+  return JsonResponse(chart_data)
