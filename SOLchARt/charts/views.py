@@ -5,6 +5,7 @@ import pandas as pd
 from django.shortcuts import render, redirect
 from .forms import ExcelUploadForm
 from django.http import JsonResponse
+from datetime import datetime
 
 def charts(request):
   mymembers = Member.objects.all().values()
@@ -56,6 +57,8 @@ def chart_page(request):
 
 def get_chart_data(request): #udostępnia dane do wykresów
   data = Data.objects.all().order_by('Time')
+  #data = Data.objects.all().order_by('Time')[:100] #wyciąga 100 ostatnich rekordów z bazy
+
 
   time_labels = [record.Time.strftime('%Y-%m-%d %H:%M:%S') for record in data]
   temperatures = [record.Temp for record in data]

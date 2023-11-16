@@ -1,98 +1,193 @@
+<!-- HTML -->
 {% extends 'base.html' %}
 
 {% block title %}Temperature Data{% endblock %}
-{%block head %}
+{% block head %}
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 {% endblock %}
 {% block content %}
     <h2>Charts</h2>
+    <form id="recordForm">
+        <label for="startRecord">Start Record:</label>
+        <input type="number" id="startRecord" value="0">
+        <label for="endRecord">End Record:</label>
+        <input type="number" id="endRecord" value="10000">
+        <button type="button" onclick="updateChart()">Update Chart</button>
+    </form>
+
+    <form id="dateForm">
+        <label for="startDate">Select Start Date:</label>
+        <input type="date" id="startDate">
+        <label for="endDate">Select End Date:</label>
+        <input type="date" id="endDate">
+        <button type="button" onclick="showData()">Show Data</button>
+    </form>
 
     <div style="margin-top: 20px;">
         <div>
             <canvas id="myChart"></canvas>
         </div>
-        <ul id="temperatureDataList">
-            <!-- Dane z kolumn 'timeLabels', 'temperatures' i 'H_Total' zostaną wstawione tutaj dynamicznie -->
-        </ul>
     </div>
 {% endblock %}
 {% block script %}
- <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            fetch('/get_chart_data/')
+    <script>
+    //Uruchom funkcje przy starcie strony
+    document.addEventListener('DOMContentLoaded', function() {
+    updateChart();
+    });
+        const ctx = document.getElementById('myChart');
+        let myChart; // Zmienna do przechowywania referencji do wykresu
+
+        // Obiekt do przechowywania wyników
+        const results = {};
+
+
+        function updateChart() {
+            const startRecord = document.getElementById('startRecord').value;
+            const endRecord = document.getElementById('endRecord').value;
+
+            fetch(`/get_chart_data/?start_record=${startRecord}&end_record=${endRecord}`)
                 .then(response => response.json())
                 .then(data => {
                     // Wydobywanie danych
-                    var timeLabels = data.time_labels;
+                    var timeLabels = data.time_labels.slice(startRecord, endRecord);
                     var temperatures = data.temperatures;
                     var hTotal = data.H_Total;
                     var eTotal = data.E_Total;
                     var eToday = data.E_Today;
 
-                    // Tworzenie wykresu liniowego
-                    const ctx = document.getElementById('myChart');
+                    // Konwertuj daty na format 'yyyy-mm-dd'
+const uniqueDatesSet = new Set(timeLabels.map(dateTime => dateTime.split(' ')[0]));
 
-                    new Chart(ctx, {
+// Konwertuj obiekt Set z powrotem na tablicę (jeśli to konieczne)
+const uniqueDatesArray = Array.from(uniqueDatesSet);
+
+// Zlicz unikalne daty
+const uniqueDatesCount = uniqueDatesArray.length;
+
+console.log(uniqueDatesArray); // Wyświetli np ['2022-11-08', '2022-11-09']
+console.log(uniqueDatesCount); // Wyświetli np 2 w
+
+// Obiekt do przechowywania wyników zliczania dla każdej daty
+const countsForDates = {};
+
+
+// Dla każdej daty w uniqueDatesArray
+uniqueDatesArray.forEach(selectedDate => {
+  // Filtruj timeLabels dla danej daty
+  const labelsForSelectedDate = timeLabels.filter(label => label.startsWith(selectedDate));
+  const labelsTempForSelectedDate = timeLabels.filter(label => label.temperatures);
+
+  // Zlicz ilość wartości dla danej daty
+  const countForSelectedDate = labelsForSelectedDate.length;
+
+  // Pobierz odpowiadające wartości temperatur
+  const temperaturesForSelectedDate = temperatures.slice(startRecord, endRecord).filter((value, index) => {
+      return timeLabels[index].startsWith(selectedDate);
+  });
+
+    // Zapisz wyniki w obiekcie results
+  results[selectedDate] = {
+    count: countForSelectedDate,
+    labels: labelsForSelectedDate,
+    temperatures: temperaturesForSelectedDate,
+  };
+
+});
+
+console.log('Ilość wartości dla każdej daty:', countsForDates);
+console.log('Wyniki:', results);
+
+
+
+                    // Zniszczenie poprzedniego wykresu, jeśli istnieje
+                    if (myChart) {
+                        myChart.destroy();
+                    }
+
+                    // Tworzenie nowego wykresu
+                    myChart = new Chart(ctx, {
                         type: 'line',
                         data: {
                             labels: timeLabels,
                             datasets: [{
-                                label: 'Temperature',
+                                label: 'Temperatura',
                                 data: temperatures,
-                                borderColor: 'rgba(75, 192, 192, 1)',
-                                borderWidth: 1,
-                                fill: false,
-                            },
-                            {
-                                label: 'H_Total',
-                                data: hTotal,
-                                borderColor: 'rgba(255, 99, 132, 1)',
-                                borderWidth: 1,
-                                fill: false,
-                            },
-                            {
-                                label: 'E_Total',
-                                data: eTotal,
-                                borderColor: 'rgba(31, 12, 242, 1)',
-                                borderWidth: 1,
-                                fill: false,
-                            },
-                            {
-                                label: 'E_Today',
-                                data: eToday,
-                                borderColor: 'rgba(0, 255, 8, 1)',
-                                borderWidth: 1,
-                                fill: false,
+                                borderWidth: 1
                             }]
                         },
                         options: {
                             scales: {
-                                x: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        display: true,
-                                        labelString: 'Time Labels'
-                                    }
-                                }],
-                                y: [{
-                                    display: true,
-                                    scaleLabel: {
-                                        display: true,
-                                        labelString: 'Temperature and H_Total'
-                                    }
-                                }]
+                                y: {
+                                    beginAtZero: true
+                                }
                             }
                         }
                     });
+                })
+                .catch(error => {
+                    console.error('Error fetching data:', error);
                 });
+        }
+//----------------------------------------------------------------------------------------------------
+
+
+        function showData() {
+    const startDate = document.getElementById('startDate').value;
+    const endDate = document.getElementById('endDate').value;
+
+    // Sprawdź, czy wybrane daty istnieją w wynikach
+    if (results[startDate] && results[endDate]) {
+        const timeLabels = [];
+        const temperatures = [];
+
+        // Przechodzimy przez każdą datę w zakresie pomiędzy startDate i endDate
+        const currentDate = new Date(startDate);
+        const endDateTime = new Date(endDate);
+        while (currentDate <= endDateTime) {
+            const currentDateString = currentDate.toISOString().split('T')[0];
+
+            if (results[currentDateString]) {
+                const dataForCurrentDate = results[currentDateString];
+                timeLabels.push(...dataForCurrentDate.labels);
+                //timeLabels.push(...dataForCurrentDate.labels) - dodaje etykiety czasowe z obiektu dataForCurrentDate do tablicy timeLabels. Operator ... służy do rozpakowywania elementów z jednej tablicy i dodawania ich do innej tablicy.
+                temperatures.push(...dataForCurrentDate.temperatures);
+            }
+
+            // Przechodzimy do kolejnej daty
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        // Zniszczenie poprzedniego wykresu, jeśli istnieje
+        if (myChart) {
+            myChart.destroy();
+        }
+
+        // Tworzenie nowego wykresu tylko z danymi z wybranego zakresu dat
+        myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: timeLabels,
+                datasets: [{
+                    label: 'Temperatura',
+                    data: temperatures,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
         });
+    } else {
+        console.log(`Brak danych dla wybranego zakresu dat: ${startDate} - ${endDate}`);
+    }
+}
+
+
+
     </script>
 {% endblock %}
-
-
-
-
-
-
-
-
