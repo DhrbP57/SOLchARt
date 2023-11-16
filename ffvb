@@ -1,0 +1,23 @@
+[33mcommit 7385a1e4d32d393b655a9ae91b942c2e4ab81a4e[m[33m ([m[1;36mHEAD -> [m[1;32mmaster[m[33m)[m
+Author: Dawid Potocki <dpotocki57@gmail.com>
+Date:   Thu Nov 16 09:23:47 2023 +0100
+
+    Changes to charts
+
+[33mcommit c74f30fc1fb4745d91d7fc2676a93abe9938d7ae[m
+Author: Dawid Potocki <dpotocki57@gmail.com>
+Date:   Wed Nov 15 15:02:31 2023 +0100
+
+    Adding a subpage with a chart
+
+[33mcommit 94c55791dc7f115452efed21538d4648114c18e5[m
+Author: Dawid Potocki <dpotocki57@gmail.com>
+Date:   Fri Nov 10 14:12:29 2023 +0100
+
+    Option to add data from excel files
+
+[33mcommit a272623b003bae4cfcdf31fff68e05fbace6dc65[m
+Author: Dawid Potocki <dpotocki57@gmail.com>
+Date:   Fri Nov 10 09:21:08 2023 +0100
+
+    Django configuration. Adding bootstrap.

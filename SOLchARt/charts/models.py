@@ -1,4 +1,5 @@
 from django.db import models
+from django.contrib.auth.models import User
 
 class Member(models.Model):
   firstname = models.CharField(max_length=255)
@@ -8,6 +9,7 @@ class Member(models.Model):
     return f"{self.firstname} {self.lastname}"
 
 class Data(models.Model):
+  user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)  # lub domyślnie przypisane do pewnej wartości
   SN = models.CharField(max_length=255, default=0)
   Time = models.DateTimeField()
   date = models.DateField(blank=True, null=True)

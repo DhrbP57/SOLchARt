@@ -6,7 +6,10 @@ from django.shortcuts import render, redirect
 from .forms import ExcelUploadForm
 from django.http import JsonResponse
 from datetime import datetime
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth import logout
 
+@login_required
 def charts(request):
   mymembers = Member.objects.all().values()
   template = loader.get_template('all_members.html')
@@ -15,10 +18,12 @@ def charts(request):
   }
   return HttpResponse(template.render(context, request))
 
+@login_required
 def index(request):
   template = loader.get_template('index.html')
   return HttpResponse(template.render())
 
+@login_required
 def upload_excel(request):
   if request.method == 'POST':
     form = ExcelUploadForm(request.POST, request.FILES)
@@ -32,6 +37,12 @@ def upload_excel(request):
       # Dodaj dwie nowe kolumny
       df['date'] = df['Time'].dt.date
       df['time_of_day'] = df['Time'].dt.time
+
+      # Pobierz aktualnie zalogowanego użytkownika
+      current_user = request.user
+
+      # Dodaj dwie nowe kolumny związane z użytkownikiem
+      df['user_id'] = current_user.id
 
       records = df.to_dict('records')
       Data.objects.bulk_create([Data(**record) for record in records])
@@ -47,16 +58,23 @@ def upload_excel(request):
 
 
 
+@login_required
 def success(request):
   template = loader.get_template('success.html')
   return HttpResponse(template.render())
 
+@login_required
 def chart_page(request):
   return render(request, 'chart_page.html')
 
 
+@login_required
 def get_chart_data(request): #udostępnia dane do wykresów
-  data = Data.objects.all().order_by('Time')
+  current_user = request.user
+
+  # Ogranicz zapytanie do bazy danych do rekordów zalogowanego użytkownika i tych, które zostały udostępnione przez niego
+  data = Data.objects.filter(user=current_user).order_by('Time')
+  #data = Data.objects.all().order_by('Time')
   #data = Data.objects.all().order_by('Time')[:100] #wyciąga 100 ostatnich rekordów z bazy
 
 
@@ -75,3 +93,4 @@ def get_chart_data(request): #udostępnia dane do wykresów
   }
 
   return JsonResponse(chart_data)
+
