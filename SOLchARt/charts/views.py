@@ -101,9 +101,12 @@ def get_chart_data(request): #udostępnia dane do wykresów
 def extremum_values(request):
     # Znajdź największe i najmniejsze wartości dla poszczególnych pól tylko dla zalogowanego użytkownika
     extremum_data = Data.objects.filter(user=request.user).aggregate(
+        max_pac=Max('Pac'),
+        min_pac=Min('Pac'),
+        max_ipv2=Max('Ipv2'),
+        min_ipv2=Min('Ipv2'),
         max_temp=Max('Temp'),
         min_temp=Min('Temp'),
-        avg_temp=Avg('Temp'),
         max_date=Max('date'),
         min_date=Min('date'),
         max_time_of_day=Max('time_of_day'),
@@ -114,10 +117,19 @@ def extremum_values(request):
         min_e_total=Min('E_Total'),
         max_h_total=Max('H_Total'),
         min_h_total=Min('H_Total'),
+        avg_temp=Avg('Temp'),
+        avg_e_today=Avg('E_Today'),
+        avg_pac=Avg('Pac'),
+        avg_ipv2=Avg('Ipv2'),
     )
+    # Znajdź najwyższą wartość E_Today dla poszczególnych dni tylko dla zalogowanego użytkownika
+    highest_e_today_per_day_data = Data.objects.filter(user=request.user).values('date').annotate(
+        max_e_today=Max('E_Today'))
 
     # Oblicz średnią temperaturę dla każdego dnia
     avg_temp_per_day = Data.objects.filter(user=request.user).values('date').annotate(avg_temp=Avg('Temp'))
+    avg_pac_day = Data.objects.filter(user=request.user).values('date').annotate(avg_pac=Avg('Pac'))
+    avg_ipv2_day = Data.objects.filter(user=request.user).values('date').annotate(avg_ipv2=Avg('Ipv2'))
 
     # Znajdź datę, kiedy wystąpiła najwyższa temperatura
     time_of_max_temp_data = Data.objects.filter(user=request.user, Temp=extremum_data['max_temp']).values('Time').first()
@@ -125,9 +137,12 @@ def extremum_values(request):
 
     # Przygotuj dane do przekazania do szablonu
     context = {
+        'max_pac': extremum_data['max_pac'],
+        'min_pac': extremum_data['min_pac'],
+        'max_ipv2': extremum_data['max_ipv2'],
+        'min_ipv2': extremum_data['min_ipv2'],
         'max_temp': extremum_data['max_temp'],
         'min_temp': extremum_data['min_temp'],
-        'avg_temp': extremum_data['avg_temp'],
         'max_date': extremum_data['max_date'],
         'min_date': extremum_data['min_date'],
         'max_time_of_day': extremum_data['max_time_of_day'],
@@ -140,7 +155,14 @@ def extremum_values(request):
         'min_h_total': extremum_data['min_h_total'],
         'time_of_max_temp': time_of_max_temp_data['Time'] if time_of_max_temp_data else None,
         'time_of_min_temp': time_of_min_temp_data['Time'] if time_of_min_temp_data else None,
+        'avg_temp': extremum_data['avg_temp'],
+        'avg_pac': extremum_data['avg_pac'],
+        'avg_ipv2': extremum_data['avg_ipv2'],
+        'avg_e_today': extremum_data['avg_e_today'],
         'avg_temp_per_day': avg_temp_per_day,
+        'avg_pac_day': avg_pac_day,
+        'avg_ipv2_day': avg_ipv2_day,
+        'highest_e_today_per_day_data': highest_e_today_per_day_data,
     }
 
     # Renderuj szablon z danymi

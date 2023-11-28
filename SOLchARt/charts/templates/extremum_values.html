@@ -1,13 +1,16 @@
 {% extends 'base.html' %}
 
 {% block title %}STATISTICS{% endblock %}
-
+{% block head %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+{% endblock %}
 {% block content %}
 
 <div class="container mt-5">
         <h1 class="mb-4">Extremum Values</h1>
 
-        <table class="table table-bordered table-hover">
+        <table class="table table-bordered table-hover table1">
             <thead class="thead-dark">
                 <tr>
                     <th>Category</th>
@@ -25,6 +28,16 @@
                     <td>Time of Day</td>
                     <td>{{ max_time_of_day }}</td>
                     <td>{{ min_time_of_day }}</td>
+                </tr>
+                <tr>
+                    <td>Pac</td>
+                    <td>{{ max_pac }}</td>
+                    <td>{{ min_pac }}</td>
+                </tr>
+                <tr>
+                    <td>Ipv2</td>
+                    <td>{{ max_ipv2 }}</td>
+                    <td>{{ min_ipv2 }}</td>
                 </tr>
                 <tr class="table-success">
                     <td>Temp</td>
@@ -49,8 +62,11 @@
             </tbody>
         </table>
 
+
+
+
         <h1 class="mb-4">Avarage Values</h1>
-     <table class="table table-bordered table-hover">
+     <table class="table table-bordered table-hover table2">
             <thead class="thead-dark">
                 <tr>
                     <th>Category</th>
@@ -62,32 +78,106 @@
                 <tr>
                     <td>Temperatures</td>
                     <td>{{ avg_temp|floatformat:1 }}</td>
-
                 </tr>
+                <tr>
+                    <td>E_Today</td>
+                    <td>{{ avg_e_today|floatformat:1 }}</td>
+                </tr>
+                <tr>
+                    <td>Pac</td>
+                    <td>{{ avg_pac|floatformat:1 }}</td>
+                </tr>
+                <tr>
+                    <td>Ipv2</td>
+                    <td>{{ avg_ipv2|floatformat:1 }}</td>
+                </tr>
+
             </tbody>
         </table>
 
-    <h1 class="mb-4">Avarage Days Temperatures</h1>
 
-    <table class="table table-bordered table-hover">
+
+
+
+    <h1 class="mb-4">Avarage per Day</h1>
+
+
+    <table class="table table-bordered table-hover table3">
   <thead>
     <tr>
       <th>Data</th>
       <th>Średnia Temperatura</th>
+      <th>Najwyższa wartość E_Today</th>
+        <th>Średnia Pac</th>
+        <th>Średnia Ipv2</th>
     </tr>
   </thead>
   <tbody>
     {% for avg_temp_entry in avg_temp_per_day %}
       <tr>
         <td>{{ avg_temp_entry.date }}</td>
-        <td style="{% if avg_temp_entry.avg_temp > avg_temp %}color: green;{% else %}color: red;{% endif %}">{{ avg_temp_entry.avg_temp|floatformat:1 }}</td>
+        <td style="{% if avg_temp_entry.avg_temp > avg_temp %}color: green;{% else %}color: red;{% endif %}">
+          {{ avg_temp_entry.avg_temp|floatformat:1 }}
+        </td>
+        {# Szukaj odpowiadającej wartości w highest_e_today_per_day_data #}
+        {% for highest_e_today_entry in highest_e_today_per_day_data %}
+          {% if highest_e_today_entry.date == avg_temp_entry.date %}
+          <td style="{% if highest_e_today_entry.max_e_today > avg_e_today %}color: green;{% else %}color: red;{% endif %}">
+              {{ highest_e_today_entry.max_e_today }}
+          </td>
+          {% endif %}
+        {% endfor %}
+          {# Szukaj odpowiadającej wartości w avg_pac_day #}
+        {% for avg_pac_day in avg_pac_day %}
+          {% if avg_pac_day.date == avg_temp_entry.date %}
+          <td style="{% if avg_pac_day.avg_pac > avg_pac %}color: green;{% else %}color: red;{% endif %}">
+              {{ avg_pac_day.avg_pac|floatformat:2 }}
+          </td>
+          {% endif %}
+        {% endfor %}
+          {# Szukaj odpowiadającej wartości w avg_ipv2_day #}
+        {% for avg_ipv2_day in avg_ipv2_day %}
+          {% if avg_ipv2_day.date == avg_temp_entry.date %}
+          <td style="{% if avg_ipv2_day.avg_ipv2 > avg_ipv2 %}color: green;{% else %}color: red;{% endif %}">
+              {{ avg_ipv2_day.avg_ipv2|floatformat:2 }}
+          </td>
+          {% endif %}
+        {% endfor %}
       </tr>
     {% endfor %}
   </tbody>
 </table>
 
+    <button type="button" class="btn btn-primary" onclick="exportTable('table1')">Export Table 1</button>
+    <button type="button" class="btn btn-primary" onclick="exportTable('table2')">Export Table 2</button>
+    <button type="button" class="btn btn-primary" onclick="exportTable('table3')">Export Table 3</button>
+
+
+
     </div>
 
+
+
+
+<script>
+        function exportTable(tableClass) {
+            // Utwórz obiekt html2canvas dla konkretnej tabeli (według klasy)
+            html2canvas(document.querySelector("." + tableClass)).then(canvas => {
+                // Konwertuj obraz na dane URL w formie PNG
+                var imgData = canvas.toDataURL("image/png");
+
+                // Utwórz link do pobrania pliku
+                var link = document.createElement('a');
+                link.href = imgData;
+                link.download = tableClass + '_export.png';  // Unikalna nazwa pliku dla każdej tabeli
+
+                // Dodaj link do dokumentu i kliknij go
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+        }
+    </script>
 
 
 
