@@ -8,5 +8,6 @@ urlpatterns = [
     path('get_chart_data/', views.get_chart_data, name='get_chart_data'),
     path('success/', views.success, name='success'),
     path('upload_excel/', views.upload_excel, name='upload_excel'),
+    path('extremum_values/', views.extremum_values, name='extremum_values'),
     path('', views.index, name='index'),
 ]

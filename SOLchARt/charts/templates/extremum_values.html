@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}STATISTICS{% endblock %}
+
+{% block content %}
+
+<div class="container mt-5">
+        <h1 class="mb-4">Extremum Values</h1>
+
+        <table class="table table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Category</th>
+                    <th>Max Value</th>
+                    <th>Min Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Date</td>
+                    <td>{{ max_date }}</td>
+                    <td>{{ min_date }}</td>
+                </tr>
+                <tr>
+                    <td>Time of Day</td>
+                    <td>{{ max_time_of_day }}</td>
+                    <td>{{ min_time_of_day }}</td>
+                </tr>
+                <tr class="table-success">
+                    <td>Temp</td>
+                    <td><i class="bi bi-lightning"></i> {{ max_temp }} (at {{ time_of_max_temp }})</td>
+                    <td>{{ min_temp }} (at {{ time_of_min_temp }})</td>
+                </tr>
+                <tr>
+                    <td>E_Today</td>
+                    <td>{{ max_e_today }}</td>
+                    <td>{{ min_e_today }}</td>
+                </tr>
+                <tr>
+                    <td>E_Total</td>
+                    <td>{{ max_e_total }}</td>
+                    <td>{{ min_e_total }}</td>
+                </tr>
+                <tr>
+                    <td>H_Total</td>
+                    <td>{{ max_h_total }}</td>
+                    <td>{{ min_h_total }}</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h1 class="mb-4">Avarage Values</h1>
+     <table class="table table-bordered table-hover">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Category</th>
+                    <th>Avarage Values</th>
+
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Temperatures</td>
+                    <td>{{ avg_temp|floatformat:1 }}</td>
+
+                </tr>
+            </tbody>
+        </table>
+
+    <h1 class="mb-4">Avarage Days Temperatures</h1>
+
+    <table class="table table-bordered table-hover">
+  <thead>
+    <tr>
+      <th>Data</th>
+      <th>Średnia Temperatura</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for avg_temp_entry in avg_temp_per_day %}
+      <tr>
+        <td>{{ avg_temp_entry.date }}</td>
+        <td style="{% if avg_temp_entry.avg_temp > avg_temp %}color: green;{% else %}color: red;{% endif %}">{{ avg_temp_entry.avg_temp|floatformat:1 }}</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+    </div>
+
+
+
+
+    <!-- Dodaj ikony Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.min.css" rel="stylesheet">
+{% endblock %}
+
+
+
+

@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from datetime import datetime
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth import logout
+from django.db.models import Max, Min, Avg
+
 
 @login_required
 def charts(request):
@@ -68,6 +70,7 @@ def chart_page(request):
   return render(request, 'chart_page.html')
 
 
+
 @login_required
 def get_chart_data(request): #udostępnia dane do wykresów
   current_user = request.user
@@ -94,3 +97,51 @@ def get_chart_data(request): #udostępnia dane do wykresów
 
   return JsonResponse(chart_data)
 
+@login_required
+def extremum_values(request):
+    # Znajdź największe i najmniejsze wartości dla poszczególnych pól tylko dla zalogowanego użytkownika
+    extremum_data = Data.objects.filter(user=request.user).aggregate(
+        max_temp=Max('Temp'),
+        min_temp=Min('Temp'),
+        avg_temp=Avg('Temp'),
+        max_date=Max('date'),
+        min_date=Min('date'),
+        max_time_of_day=Max('time_of_day'),
+        min_time_of_day=Min('time_of_day'),
+        max_e_today=Max('E_Today'),
+        min_e_today=Min('E_Today'),
+        max_e_total=Max('E_Total'),
+        min_e_total=Min('E_Total'),
+        max_h_total=Max('H_Total'),
+        min_h_total=Min('H_Total'),
+    )
+
+    # Oblicz średnią temperaturę dla każdego dnia
+    avg_temp_per_day = Data.objects.filter(user=request.user).values('date').annotate(avg_temp=Avg('Temp'))
+
+    # Znajdź datę, kiedy wystąpiła najwyższa temperatura
+    time_of_max_temp_data = Data.objects.filter(user=request.user, Temp=extremum_data['max_temp']).values('Time').first()
+    time_of_min_temp_data = Data.objects.filter(user=request.user, Temp=extremum_data['min_temp']).values('Time').first()
+
+    # Przygotuj dane do przekazania do szablonu
+    context = {
+        'max_temp': extremum_data['max_temp'],
+        'min_temp': extremum_data['min_temp'],
+        'avg_temp': extremum_data['avg_temp'],
+        'max_date': extremum_data['max_date'],
+        'min_date': extremum_data['min_date'],
+        'max_time_of_day': extremum_data['max_time_of_day'],
+        'min_time_of_day': extremum_data['min_time_of_day'],
+        'max_e_today': extremum_data['max_e_today'],
+        'min_e_today': extremum_data['min_e_today'],
+        'max_e_total': extremum_data['max_e_total'],
+        'min_e_total': extremum_data['min_e_total'],
+        'max_h_total': extremum_data['max_h_total'],
+        'min_h_total': extremum_data['min_h_total'],
+        'time_of_max_temp': time_of_max_temp_data['Time'] if time_of_max_temp_data else None,
+        'time_of_min_temp': time_of_min_temp_data['Time'] if time_of_min_temp_data else None,
+        'avg_temp_per_day': avg_temp_per_day,
+    }
+
+    # Renderuj szablon z danymi
+    return render(request, 'extremum_values.html', context)
