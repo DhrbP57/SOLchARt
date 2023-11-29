@@ -9,21 +9,21 @@
 
     <!-- Wybór zakresu dat -->
     <label for="startDatePicker">Start Date:</label>
-    <input type="date" id="startDatePicker" value="2022-11-27">
+    <input type="date" class="form-control" id="startDatePicker" value="2022-11-27">
 
     <label for="endDatePicker">End Date:</label>
-    <input type="date" id="endDatePicker" value="2022-11-29">
+    <input type="date" class="form-control" id="endDatePicker" value="2022-11-29">
 
     <!-- Wybór rodzaju danych -->
     <label for="dataOption">Data Option:</label>
-    <select id="dataOption">
+    <select id="dataOption" class="form-control">
         <option value="all">All</option>
         <option value="byDays">By Days</option>
         <option value="byHours">By Hours</option>
     </select>
 
     <!-- Przycisk filtrujący dane -->
-    <button onclick="filterData()">Filter Data</button>
+    <button onclick="filterData()" class="btn btn-success mt-2">Filter Data</button>
 
     <div>
         <!-- Obszar dla wykresu -->

@@ -1,13 +1,13 @@
 {% extends 'base.html' %}
 
 {% block title %}Main{% endblock %}
-
+{% load crispy_forms_tags %}
 {% block content %}
   <h2>Prześlij plik Excel</h2>
 
     <form method="post" enctype="multipart/form-data">
         {% csrf_token %}
-        {{ form.as_p }}
-        <button type="submit">Prześlij</button>
+        {{ form|crispy }}
+        <button type="submit" class="btn btn-success">Prześlij</button>
     </form>
 {% endblock %}
