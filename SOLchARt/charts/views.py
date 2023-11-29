@@ -86,6 +86,8 @@ def get_chart_data(request): #udostępnia dane do wykresów
   H_Total = [record.H_Total for record in data]
   E_Total = [record.E_Total for record in data]
   E_Today = [record.E_Today for record in data]
+  Pac = [record.Pac for record in data]
+  Ipv2 = [record.Ipv2 for record in data]
 
   chart_data = {
     'time_labels': time_labels,
@@ -93,6 +95,8 @@ def get_chart_data(request): #udostępnia dane do wykresów
     'H_Total': H_Total,
     'E_Total': E_Total,
     'E_Today': E_Today,
+    'Pac': Pac,
+    'Ipv2': Ipv2,
   }
 
   return JsonResponse(chart_data)

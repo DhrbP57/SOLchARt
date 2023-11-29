@@ -1,194 +1,282 @@
-<!-- HTML -->
 {% extends 'base.html' %}
 
-{% block title %}Temperature Data{% endblock %}
-{% block head %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{% endblock %}
+{% block title %}Chart Data{% endblock %}
+
 {% block content %}
-    <h2>Charts</h2>
-    <form id="recordForm">
-        <label for="startRecord">Start Record:</label>
-        <input type="number" id="startRecord" value="0">
-        <label for="endRecord">End Record:</label>
-        <input type="number" id="endRecord" value="10000">
-        <button type="button" onclick="updateChart()">Update Chart</button>
-    </form>
-
-    <form id="dateForm">
-        <label for="startDate">Select Start Date:</label>
-        <input type="date" id="startDate" value="2022-11-28">
-        <label for="endDate">Select End Date:</label>
-        <input type="date" id="endDate" value="2022-11-30">
-        <button type="button" onclick="showData()">Show Data</button>
-    </form>
 
 
-    <div style="margin-top: 20px;">
-        <div>
-            <canvas id="myChart"></canvas>
-        </div>
+    <h2>Chart Data</h2>
+
+    <!-- Wybór zakresu dat -->
+    <label for="startDatePicker">Start Date:</label>
+    <input type="date" id="startDatePicker" value="2022-11-27">
+
+    <label for="endDatePicker">End Date:</label>
+    <input type="date" id="endDatePicker" value="2022-11-29">
+
+    <!-- Wybór rodzaju danych -->
+    <label for="dataOption">Data Option:</label>
+    <select id="dataOption">
+        <option value="all">All</option>
+        <option value="byDays">By Days</option>
+        <option value="byHours">By Hours</option>
+    </select>
+
+    <!-- Przycisk filtrujący dane -->
+    <button onclick="filterData()">Filter Data</button>
+
+    <div>
+        <!-- Obszar dla wykresu -->
+        <canvas id="myChart"></canvas>
     </div>
-{% endblock %}
-{% block script %}
+
+    <!-- Biblioteka do tworzenia wykresów -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <script>
-    //Uruchom funkcje przy starcie strony
-    document.addEventListener('DOMContentLoaded', function() {
-    updateChart();
-    });
-        const ctx = document.getElementById('myChart');
-        let myChart; // Zmienna do przechowywania referencji do wykresu
+        // Zmienna przechowująca referencję do wykresu
+        let myChart;
 
-        // Obiekt do przechowywania wyników
-        const results = {};
+        // Funkcja filtrująca dane na podstawie wyborów użytkownika
+        function filterData() {
+            // Pobierz wybrane daty i rodzaj danych od użytkownika
+            const startDate = document.getElementById('startDatePicker').value;
+            const endDate = document.getElementById('endDatePicker').value;
+            const dataOption = document.getElementById('dataOption').value;
 
-
-        function updateChart() {
-            const startRecord = document.getElementById('startRecord').value;
-            const endRecord = document.getElementById('endRecord').value;
-
-            fetch(`/get_chart_data/?start_record=${startRecord}&end_record=${endRecord}`)
+            // Pobierz dane z API
+            fetch('http://127.0.0.1:8000/get_chart_data/')
                 .then(response => response.json())
                 .then(data => {
-                    // Wydobywanie danych
-                    var timeLabels = data.time_labels.slice(startRecord, endRecord);
+                    // Dane z API
+                    var timeLabels = data.time_labels;
                     var temperatures = data.temperatures;
-                    var hTotal = data.H_Total;
-                    var eTotal = data.E_Total;
-                    var eToday = data.E_Today;
+                    var eTodayValues = data.E_Today;
+                    var pacValues = data.Pac;
+                    var ipv2Values = data.Ipv2;
 
-                    // Konwertuj daty na format 'yyyy-mm-dd'
-const uniqueDatesSet = new Set(timeLabels.map(dateTime => dateTime.split(' ')[0]));
-
-// Konwertuj obiekt Set z powrotem na tablicę (jeśli to konieczne)
-const uniqueDatesArray = Array.from(uniqueDatesSet);
-
-// Zlicz unikalne daty
-const uniqueDatesCount = uniqueDatesArray.length;
-
-console.log(uniqueDatesArray); // Wyświetli np ['2022-11-08', '2022-11-09']
-console.log(uniqueDatesCount); // Wyświetli np 2 w
-
-// Obiekt do przechowywania wyników zliczania dla każdej daty
-const countsForDates = {};
-
-
-// Dla każdej daty w uniqueDatesArray
-uniqueDatesArray.forEach(selectedDate => {
-  // Filtruj timeLabels dla danej daty
-  const labelsForSelectedDate = timeLabels.filter(label => label.startsWith(selectedDate));
-  const labelsTempForSelectedDate = timeLabels.filter(label => label.temperatures);
-
-  // Zlicz ilość wartości dla danej daty
-  const countForSelectedDate = labelsForSelectedDate.length;
-
-  // Pobierz odpowiadające wartości temperatur
-  const temperaturesForSelectedDate = temperatures.slice(startRecord, endRecord).filter((value, index) => {
-      return timeLabels[index].startsWith(selectedDate);
-  });
-
-    // Zapisz wyniki w obiekcie results
-  results[selectedDate] = {
-    count: countForSelectedDate,
-    labels: labelsForSelectedDate,
-    temperatures: temperaturesForSelectedDate,
-  };
-
-});
-
-console.log('Ilość wartości dla każdej daty:', countsForDates);
-console.log('Wyniki:', results);
-
-
-
-                    // Zniszczenie poprzedniego wykresu, jeśli istnieje
+                    // Pobierz element canvas po zniszczeniu poprzedniego wykresu
+                    const ctx = document.getElementById('myChart');
                     if (myChart) {
                         myChart.destroy();
                     }
 
-                    // Tworzenie nowego wykresu
-                    myChart = new Chart(ctx, {
-                        type: 'line',
-                        data: {
-                            labels: timeLabels,
-                            datasets: [{
-                                label: 'Temperatura',
-                                data: temperatures,
-                                borderWidth: 1
-                            }]
-                        },
-                        options: {
-                            scales: {
-                                y: {
-                                    beginAtZero: true
+                    //-----------------------------------------------------
+                    // OPCJA 'BY DAYS'
+                    //-----------------------------------------------------
+                    if (dataOption === 'byDays') {
+                        const dateData = {};
+
+                        // Grupowanie danych według dat
+                        for (let i = 0; i < timeLabels.length; i++) {
+                            const currentDate = new Date(timeLabels[i]);
+                            const formattedDate = currentDate.toISOString().split('T')[0];
+
+                            if (startDate <= formattedDate && formattedDate <= endDate) {
+                                if (!dateData[formattedDate]) {
+                                    dateData[formattedDate] = {
+                                        temperatures: {
+                                            sum: temperatures[i],
+                                            count: 1
+                                        },
+                                        eToday: {
+                                            max: eTodayValues[i]
+                                        },
+                                        pac: {
+                                            sum: pacValues[i],
+                                            count: 1
+                                        },
+                                        ipv2: {
+                                            sum: ipv2Values[i],
+                                            count: 1
+                                        }
+                                    };
+                                } else {
+                                    dateData[formattedDate].temperatures.sum += temperatures[i];
+                                    dateData[formattedDate].temperatures.count++;
+                                    dateData[formattedDate].eToday.max = Math.max(dateData[formattedDate].eToday.max, eTodayValues[i]);
+                                    dateData[formattedDate].pac.sum += pacValues[i];
+                                    dateData[formattedDate].pac.count++;
+                                    dateData[formattedDate].ipv2.sum += ipv2Values[i];
+                                    dateData[formattedDate].ipv2.count++;
                                 }
                             }
                         }
-                    });
-                })
-                .catch(error => {
-                    console.error('Error fetching data:', error);
-                });
-        }
-//----------------------------------------------------------------------------------------------------
 
+                        // Inicjalizacja zmiennych do przechowywania wartości z kolumn "Date", "Average Temperature", "Max E-Today", "Average Pac" i "Average Ipv2"
+                        let dateValues = [];
+                        let averageTemperatureValues = [];
+                        let maxETodayValues = [];
+                        let averagePacValues = [];
+                        let averageIpv2Values = [];
 
-        function showData() {
-    const startDate = document.getElementById('startDate').value;
-    const endDate = document.getElementById('endDate').value;
+                        // Posortuj daty i dodaj dane do tabeli zgodnie z wybranym zakresem dat
+                        const sortedDates = Object.keys(dateData).sort();
+                        for (const date of sortedDates) {
+                            const averageTemperature = (dateData[date].temperatures.sum / dateData[date].temperatures.count).toFixed(2);
+                            const averagePac = (dateData[date].pac.sum / dateData[date].pac.count).toFixed(2);
+                            const averageIpv2 = (dateData[date].ipv2.sum / dateData[date].ipv2.count).toFixed(2);
 
-    // Sprawdź, czy wybrane daty istnieją w wynikach
-    if (results[startDate] && results[endDate]) {
-        const timeLabels = [];
-        const temperatures = [];
+                            // Dodaj wartości do zmiennych
+                            dateValues.push(date);
+                            averageTemperatureValues.push(averageTemperature);
+                            maxETodayValues.push(dateData[date].eToday.max);
+                            averagePacValues.push(averagePac);
+                            averageIpv2Values.push(averageIpv2);
+                        }
 
-        // Przechodzimy przez każdą datę w zakresie pomiędzy startDate i endDate
-        const currentDate = new Date(startDate);
-        const endDateTime = new Date(endDate);
-        while (currentDate <= endDateTime) {
-            const currentDateString = currentDate.toISOString().split('T')[0];
-
-            if (results[currentDateString]) {
-                const dataForCurrentDate = results[currentDateString];
-                timeLabels.push(...dataForCurrentDate.labels);
-                //timeLabels.push(...dataForCurrentDate.labels) - dodaje etykiety czasowe z obiektu dataForCurrentDate do tablicy timeLabels. Operator ... służy do rozpakowywania elementów z jednej tablicy i dodawania ich do innej tablicy.
-                temperatures.push(...dataForCurrentDate.temperatures);
-            }
-
-            // Przechodzimy do kolejnej daty
-            currentDate.setDate(currentDate.getDate() + 1);
-        }
-
-        // Zniszczenie poprzedniego wykresu, jeśli istnieje
-        if (myChart) {
-            myChart.destroy();
-        }
-
-        // Tworzenie nowego wykresu tylko z danymi z wybranego zakresu dat
-        myChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: timeLabels,
-                datasets: [{
-                    label: 'Temperatura',
-                    data: temperatures,
-                    borderWidth: 1
-                }]
-            },
-            options: {
-                scales: {
-                    y: {
-                        beginAtZero: true
+                        // Stwórz nowy wykres typu 'line'
+                        myChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: dateValues,
+                                datasets: [{
+                                    label: 'Average Temperature',
+                                    data: averageTemperatureValues,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Max E-Today',
+                                    data: maxETodayValues,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Average Pac',
+                                    data: averagePacValues,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Average Ipv2',
+                                    data: averageIpv2Values,
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
                     }
-                }
-            }
-        });
-    } else {
-        console.log(`Brak danych dla wybranego zakresu dat: ${startDate} - ${endDate}`);
-    }
-}
+                    //----------------------------------------------------------------------------------------
+                    // OPCJA 'BY HOURS'
+                    //----------------------------------------------------------------------------------------
+                    else if (dataOption === 'byHours') {
+                        const hourData = {};
 
+                        // Grupowanie danych według godzin
+                        for (let i = 0; i < timeLabels.length; i++) {
+                            const currentDate = new Date(timeLabels[i]);
+                            const formattedDate = currentDate.toISOString().split('T')[0];
 
+                            if (startDate <= formattedDate && formattedDate <= endDate) {
+                                const hour = timeLabels[i].split(' ')[1].split(':')[0];
+                                if (!hourData[hour]) {
+                                    hourData[hour] = {
+                                        sum: temperatures[i],
+                                        count: 1
+                                    };
+                                } else {
+                                    hourData[hour].sum += temperatures[i];
+                                    hourData[hour].count++;
+                                }
+                            }
+                        }
 
+                        // Inicjalizacja zmiennych do przechowywania wartości z kolumn "Hour Range" i "Average Temperature"
+                        let hourRangeValues = [];
+                        let averageTemperatureValues = [];
+
+                        // Posortuj godziny i dodaj dane do tabeli zgodnie z wybranym zakresem dat
+                        const sortedHours = Object.keys(hourData).sort((a, b) => parseInt(a) - parseInt(b));
+                        for (const hour of sortedHours) {
+                            const averageTemperature = (hourData[hour].sum / hourData[hour].count).toFixed(2);
+                            const hourRange = `${hour}:00 - ${parseInt(hour) + 1}:00`;
+
+                            // Dodaj wartości do zmiennych
+                            hourRangeValues.push(hourRange);
+                            averageTemperatureValues.push(averageTemperature);
+                        }
+
+                        // Stwórz nowy wykres typu 'line'
+                        myChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: hourRangeValues,
+                                datasets: [{
+                                    label: 'Average Temperature',
+                                    data: averageTemperatureValues,
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                    //----------------------------------------------------------------------------------------
+                    // OPCJA 'ALL'
+                    //----------------------------------------------------------------------------------------
+                    else if (dataOption === 'all') {
+                        let dateValuesAll = [];
+                        let TemperatureValuesAll = [];
+                        let eTodayValuesAll = [];
+                        let pacValuesAll = [];
+                        let ipv2ValuesAll = [];
+
+                        // Grupowanie danych dla wszystkich dostępnych dat
+                        for (let i = 0; i < timeLabels.length; i++) {
+                            const currentDate = new Date(timeLabels[i]);
+                            const formattedDate = currentDate.toISOString().split('T')[0];
+
+                            if (startDate <= formattedDate && formattedDate <= endDate) {
+                                //--------------
+                                // WSZYSTKO
+                                dateValuesAll.push(timeLabels[i]);
+                                TemperatureValuesAll.push(temperatures[i]);
+                                eTodayValuesAll.push(eTodayValues[i]);
+                                pacValuesAll.push(pacValues[i]);
+                                ipv2ValuesAll.push(ipv2Values[i]);
+                            }
+                        }
+
+                        // Stwórz nowy wykres typu 'line'
+                        myChart = new Chart(ctx, {
+                            type: 'line',
+                            data: {
+                                labels: dateValuesAll,
+                                datasets: [{
+                                    label: 'Temperature',
+                                    data: TemperatureValuesAll,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'E-Today',
+                                    data: eTodayValuesAll,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Pac',
+                                    data: pacValuesAll,
+                                    borderWidth: 1
+                                }, {
+                                    label: 'Ipv2',
+                                    data: ipv2ValuesAll,
+                                    borderWidth: 1
+                                }]
+                            },
+                            options: {
+                                scales: {
+                                    y: {
+                                        beginAtZero: true
+                                    }
+                                }
+                            }
+                        });
+                    }
+                })
+                .catch(error => console.error('Error fetching data:', error));
+        }
     </script>
 {% endblock %}
