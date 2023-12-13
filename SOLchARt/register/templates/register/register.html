@@ -1,17 +1,57 @@
-{% extends 'base.html' %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Register Page</title>
+    {% load crispy_forms_tags %}
+    <!-- Dodaj Bootstrap CSS -->
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+h1{color:white;}
 
-{% block title %}Login{% endblock %}
-{% load crispy_forms_tags %}
-{% block content %}
-    <h2>Register</h2>
-<form method="post">
-    {% csrf_token %}
-     {{ form|crispy }}
-    <button type="submit" class="btn btn-success">Register</button>
-  </form>
+        .center-div {
+            margin-top: 100px;
+            background-color: #e67e22;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.5);
+        }
 
-    <a href="/register/login">
-        <button type="button" class="btn btn-primary mt-2">Already have an account?</button>
-    </a>
-{% endblock %}
+        /* Drobne dostosowanie do przycisku "Already have an account?" */
+        .login-btn {
+            display: block;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
 
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-6 center-div">
+            <h1 class="text-center">SOLchARt</h1>
+            <h2>Register</h2>
+            <form method="post">
+                {% csrf_token %}
+                {{ form|crispy }}
+                <button type="submit" class="btn btn-success mt-2">Register</button>
+            </form>
+
+            <a href="/register/login" class="login-btn">
+                <button type="button" class="btn btn-primary">Already have an account?</button>
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Dodaj Bootstrap JS i jQuery (opcjonalnie) dla interaktywności -->
+<script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"></script>
+<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+
+</body>
+</html>

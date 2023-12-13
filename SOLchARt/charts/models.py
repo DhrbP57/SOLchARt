@@ -32,4 +32,4 @@ class Data(models.Model):
   Temp = models.FloatField(default=0)
 
   def __str__(self):
-    return f"{self.Time}"
+    return f"{self.user}, {self.Time}"

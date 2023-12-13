@@ -9,7 +9,7 @@ def register(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
-            return redirect('index')  # Zmień 'home' na nazwę widoku strony głównej
+            return redirect('index')
     else:
         form = UserCreationForm()
     return render(request, 'register/register.html', {'form': form})
@@ -20,7 +20,7 @@ def login_view(request):
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('index')  # Zmień 'home' na nazwę widoku strony głównej
+            return redirect('index')
     else:
         form = AuthenticationForm()
     return render(request, 'register/login.html', {'form': form})
@@ -28,4 +28,4 @@ def login_view(request):
 def logout_view(request):
     if request.method == 'POST':
         logout(request)
-        return redirect('/register/login')  # Zmień 'home' na nazwę widoku strony głównej
+        return redirect('/register/login')

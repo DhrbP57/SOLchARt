@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Forecast{% endblock %}
+
+{% block content %}
+    <h2>Forecast</h2>
+
+    <label for="cityInput">Enter City:</label>
+    <input type="text" id="cityInput" placeholder="Enter city name">
+
+    <button onclick="getWeatherData()" class="btn btn-success">Get Forecast</button>
+
+    <div id="error-message" style="color: red;"></div>
+    <div id="forecast-data"></div>
+
+    <script>
+        function getWeatherData() {
+            var city = document.getElementById('cityInput').value;
+
+            // Pobierz dane z API
+            fetch(`https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/${city}?unitGroup=metric&include=days&key=WUX54FAMWBGPDWNDSHKDNVP28&contentType=json&elements=datetime,solarradiation,solarenergy,sunrise,sunset`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('City not found');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Dane z API
+                    var days = data.days;
+
+                    // Wyświetl dane na stronie
+                    var errorMessage = document.getElementById('error-message');
+                    errorMessage.textContent = ""; // Wyczyść poprzedni komunikat błędu
+
+                    var forecastData = document.getElementById('forecast-data');
+                    forecastData.innerHTML = ""; // Wyczyść poprzednie dane
+
+                    days.forEach(day => {
+                        forecastData.innerHTML += `
+                            <p>Date: ${day.datetime}</p>
+                            <p>Predicted E_Today: ${day.solarenergy}</p>
+                            <p>Sunrise: ${day.sunrise}</p>
+                            <p>Sunset: ${day.sunset}</p>
+                            <hr>
+                        `;
+                    });
+                })
+                .catch(error => {
+                    console.error('Błąd podczas pobierania danych z API:', error);
+                    var errorMessage = document.getElementById('error-message');
+                    errorMessage.textContent = "City not found. Please enter a valid city name.";
+                });
+        }
+    </script>
+{% endblock %}

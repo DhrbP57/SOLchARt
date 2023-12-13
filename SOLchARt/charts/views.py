@@ -67,7 +67,11 @@ def success(request):
 
 @login_required
 def chart_page(request):
-  return render(request, 'chart_page.html')
+  return render(request, 'chart_page.html')\
+
+@login_required
+def forecast(request):
+  return render(request, 'forecast.html')
 
 
 
