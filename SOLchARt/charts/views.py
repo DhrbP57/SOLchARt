@@ -53,7 +53,6 @@ def upload_excel(request):
       #Data.objects.all().delete()
       return redirect('success')  # Przekieruj do strony sukcesu
 
-
   else:
     form = ExcelUploadForm()
   return render(request, 'upload_excel.html', {'form': form})
